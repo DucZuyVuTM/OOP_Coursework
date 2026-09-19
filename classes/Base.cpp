@@ -9,8 +9,8 @@ Base::Base(Base* parent, string name) {
 
 bool Base::set_name(string name) {
 	if (parent)
-		for (int i = 0; i < parent -> children.size(); i++)
-			if (parent -> children[i] -> get_name() == name)
+		for (auto sibling : parent -> children)
+			if (sibling -> get_name() == name)
 				return false;
 
 	this -> name = name;
@@ -22,9 +22,9 @@ string Base::get_name() {
 }
 
 Base* Base::get_child_by_name(string name) {
-	for (int i = 0; i < children.size(); i++)
-		if (children[i] -> get_name() == name)
-			return children[i];
+	for (auto child : children)
+		if (child -> get_name() == name)
+			return child;
 
 	return nullptr;
 }
@@ -42,20 +42,17 @@ Base* Base::get_parent() {
 }
 
 void Base::display() {
-	int size = children.size();
+	if (children.empty() && parent) return;
 
-	if (size != 0 || !parent) {
-		cout << endl << get_name();
+	cout << endl << get_name();
 
-		for (int i = 0; i < size; i++) {
-			cout << "  " << children[i] -> get_name();
+	for (auto child : children)
+		cout << "  " << child -> get_name();
 
-			if (i == size - 1) children[i] -> display();
-		}
-	}
+	if (!children.empty())
+		children.back() -> display();
 }
 
 Base::~Base() {
-	for (int i = 0; i < children.size(); i++)
-		delete children[i];
+	for (auto child : children) delete child;
 }

@@ -4,21 +4,22 @@ App::App(Base* parent): Base(parent) {}
 
 void App::build_tree() {
 	// Initial build
-	string parent_name, child_name;
+	string parent_name;
 	Base *parent = this, *child = nullptr;
 
 	cin >> parent_name;
 	set_name(parent_name);
 
 	while (true) {
+		string child_name;
 		cin >> parent_name >> child_name;
 
 		if (parent_name == child_name) break;
 
-		if (child != nullptr && parent_name == child -> get_name())
+		if (child && parent_name == child -> get_name())
 			parent = child;
 
-		if (parent -> get_child_by_name(child_name) == nullptr
+		if (!parent -> get_child_by_name(child_name)
 			&& parent_name == parent -> get_name())
 			child = new Class1(parent, child_name);
 	}
@@ -27,36 +28,34 @@ void App::build_tree() {
 	cout << endl;
 
 	// Change name
-	int level, total_level = 1, step, index;
-	string name;
+	int depth = 1;
 
-	Base* current = child;
-
-	while (current != this) {
-		current = current -> get_parent();
-		total_level += 1;
-	}
+	for (Base* p = child; p && p != this; p = p -> get_parent())
+		++depth;
 
 	while (true) {
-		current = child;
+		int level = 0, index = 0;
+		string name;
 
 		cin >> level;
 		if (level == 0) break;
 		cin >> index >> name;
-		if (level > total_level) continue;
+
+		if (level > depth) continue;
 
 		if (level == 1) {
 			if (index == 1) set_name(name);
 			continue;
 		}
 
-		if (!current && level != 1) continue;
+		if (!child) continue;
 
-		step = total_level - level + 1;
+		Base* current = child;
+		int step = depth - level + 1;
 
 		while (step) {
 			current = current -> get_parent();
-			step -= 1;
+			--step;
 		}
 
 		current = current -> get_child_by_index(index - 1);
