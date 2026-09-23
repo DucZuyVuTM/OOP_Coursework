@@ -4,6 +4,7 @@
 #include "Base.h"
 #include "Class1.h"
 
+// Класс для запуска приложения
 class App: public Base {
 	public:
 		App(Base* parent);

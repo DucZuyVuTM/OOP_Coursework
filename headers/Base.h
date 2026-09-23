@@ -7,6 +7,7 @@
 
 using namespace std;
 
+// Базовый класс всех объектов
 class Base {
 	private:
 		string name;
@@ -18,9 +19,12 @@ class Base {
 
 		bool set_name(string name);
 		string get_name();
+
+		int get_child_count();
 		Base* get_child_by_name(string name);
 		Base* get_child_by_index(int index);
 		Base* get_parent();
+
 		void display();
 };
 
