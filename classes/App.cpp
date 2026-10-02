@@ -1,92 +1,77 @@
-#include "../headers/App.h"
+#include "App.h"
 
 // Конструктор класса App
 App::App(Base* parent): Base(parent) {}
 
-// Построение иерархии объектов внутри приложения
+// Метод создания дерева иерархии
 void App::build_tree() {
 	// --- Начальное построение ---
-	string parent_name;
-	Base *parent = this,   // Обход объекта начинается с самого app
-		*child = nullptr;  // Последний созданный листовой узел
 
-	// Настроение имени для текущего объекта
-	cin >> parent_name;
-	set_name(parent_name);
+	// Настройка имени для текущего объекта
+	string root_name;
+	cin >> root_name;
 
-	// Читаем пары (родитель, потомок),
-	// пока не встретим пару с одинаковыми именами
+	set_name(root_name);
+
+	// Читаем комбинацию (родитель, потомок, номер класса),
+	// пока не встретим "endtree"
 	while (true) {
+		string parent_name;
+		cin >> parent_name;
+
+		if (parent_name == "endtree") break;
+
 		string child_name;
-		cin >> parent_name >> child_name;
+		int class_num = 0;
 
-		if (parent_name == child_name) break;
+		cin >> child_name >> class_num;
 
-		// Если только что созданный узел совпал с именем родителя,
-		// спускаемся на уровень ниже
-		if (child && parent_name == child -> get_name())
-			parent = child;
+		// Пропустить комбинацию,
+		// если родитель не найден или дубликация имён его потомков 
+		Base* parent = find_unique(parent_name);
 
-		// Создаём нового потомка,
-		// если его ещё нет и имя родителя совпадает
-		if (!parent -> get_child_by_name(child_name)
-			&& parent_name == parent -> get_name())
-			child = new Class1(parent, child_name);
-	}
-	// ---
-
-	// Вывод начального дерева
-	execute();
-	cout << endl;
-
-	// --- Изменение имён объектов ---
-
-	// Вычисление количества уровней дерева
-	int depth = 1;
-	for (Base* p = child; p && p != this; p = p -> get_parent())
-		++depth;
-
-	// Читаем запросы на переименование: level index new_name
-	// Остановить, если level = 0
-	while (true) {
-		int level = 0, index = 0;
-		string name;  // Новое имя
-
-		cin >> level;
-		if (level == 0) break;
-		cin >> index >> name;
-
-		if (level > depth) continue;  // Слишком глубокий доступ
-
-		// Level 1 - это сам app
-		if (level == 1) {
-			if (index == 1) set_name(name);
+		if (!parent || parent -> get_child_by_name(child_name))
 			continue;
+
+		// Создание потомка с номером класса
+		switch (class_num) {
+			case 2: new Class2(parent, child_name); break;
+			case 3: new Class3(parent, child_name); break;
+			case 4: new Class4(parent, child_name); break;
+			case 5: new Class5(parent, child_name); break;
+			case 6: new Class6(parent, child_name); break;
 		}
-
-		// Если имеется только 1 уровень, читать следующий запрос
-		if (!child) continue;
-
-		// От листового узла поднимаемся вверх до узла на уровне "level"
-		Base* current = child;
-		int step = depth - level + 1;
-		while (step) {
-			current = current -> get_parent();
-			--step;
-		}
-
-		// Берём потомка по индексу (нумерация с 1)
-		current = current -> get_child_by_index(index - 1);
-
-		if (current) current -> set_name(name);
 	}
-	// ---
+	// ----------------------------
+
+	// --- Установка состояний объектов ---
+
+	// Читаем комбинацию (имя объекта, новый статус объекта),
+	// пока не встретим конец файла (EOF condition)
+	string node_name;
+
+	while (cin >> node_name) {
+		int status = 0;
+		cin >> status;
+
+		// Настройка нового статуса, если объект найдён
+		Base* found = find_unique(node_name);
+		if (found)
+			found -> set_status(status);
+	}
+	// ------------------------------------
 }
 
-// Запуск приложения
+// Метод запуска системы
 int App::execute() {
-	cout << get_name();  // Вывод имени корневого узла
-	display();           // Отображение всего поддерева
+	// Вывод дерева
+	cout << "Object tree" << endl;
+	display_tree();
+
+	// Вывод дерева со статусами
+	cout << endl << "The tree of objects and their readiness" << endl;
+	display_tree_with_status();
+
 	return(0);
 }
 
