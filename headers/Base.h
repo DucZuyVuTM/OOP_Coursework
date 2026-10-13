@@ -5,6 +5,7 @@
 #include <vector>
 #include <string>
 #include <queue>
+#include <algorithm>
 
 using namespace std;
 
@@ -12,7 +13,7 @@ using namespace std;
 class Base {
 	private:
 		string name;              // Наименование объекта
-		Base* parent;             // Указатель на головной объект
+		Base* parent;             // Указатель на родительский объект
 		vector <Base*> children;  // Указатели на подчиненные объекты
 		int status = 0;           // Статус объекта
 	public:
@@ -38,6 +39,13 @@ class Base {
 
 		Base* find_unique(string name);
 		Base* find_unique_from_root(string name);
+		// ------------------
+	
+		// --- Exercise 3 ---
+		Base* find_by_path(string path);
+
+		bool move_to(Base* parent);
+		void delete_child(string name);
 		// ------------------
 };
 

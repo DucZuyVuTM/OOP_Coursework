@@ -5,8 +5,6 @@ App::App(Base* parent): Base(parent) {}
 
 // Метод создания дерева иерархии
 void App::build_tree() {
-	// --- Начальное построение ---
-
 	// Настройка имени для текущего объекта
 	string root_name;
 	cin >> root_name;
@@ -26,12 +24,22 @@ void App::build_tree() {
 
 		cin >> child_name >> class_num;
 
-		// Пропустить комбинацию,
+		// Завершить программу или пропустить комбинацию,
 		// если родитель не найден или дубликация имён его потомков 
-		Base* parent = find_unique(parent_name);
+		Base* parent = find_by_path(parent_name);
 
-		if (!parent || parent -> get_child_by_name(child_name))
+		if (!parent) {
+			cout << "Object tree" << endl;
+			display_tree();
+
+			cout << endl << "The head object " << parent_name << " is not found";
+			exit(1);
+		}
+
+		if (parent -> get_child_by_name(child_name)) {
+			cout << parent_name << "     Dubbing the names of subordinate objects" << endl;
 			continue;
+		}
 
 		// Создание потомка с номером класса
 		switch (class_num) {
@@ -42,24 +50,6 @@ void App::build_tree() {
 			case 6: new Class6(parent, child_name); break;
 		}
 	}
-	// ----------------------------
-
-	// --- Установка состояний объектов ---
-
-	// Читаем комбинацию (имя объекта, новый статус объекта),
-	// пока не встретим конец файла (EOF condition)
-	string node_name;
-
-	while (cin >> node_name) {
-		int status = 0;
-		cin >> status;
-
-		// Настройка нового статуса, если объект найдён
-		Base* found = find_unique(node_name);
-		if (found)
-			found -> set_status(status);
-	}
-	// ------------------------------------
 }
 
 // Метод запуска системы
@@ -67,10 +57,105 @@ int App::execute() {
 	// Вывод дерева
 	cout << "Object tree" << endl;
 	display_tree();
+	cout << endl;
 
-	// Вывод дерева со статусами
-	cout << endl << "The tree of objects and their readiness" << endl;
-	display_tree_with_status();
+	// --- Обработка команд ---
+
+	// Настройка текущего объекта
+	Base* current = this;
+
+	// Читаем комбинацию (команда, путь),
+	// пока не встретим "END"
+	while (true) {
+		string command;
+		cin >> command;
+
+		if (command == "END") break;
+
+		string path;
+		cin >> path;
+
+		// Поиск объекта по пути
+		Base* found = current -> find_by_path(path);
+
+		// Обработка команды SET
+		if (command == "SET") {
+			// Если объект найдён
+			if (found) {
+				// Найдённый станет текущим
+				current = found;
+
+				cout << "Object is set: " << current -> get_name();
+			}
+			else
+				cout << "The object was not found at the specified coordinate: " << path;
+		}
+
+		// Обработка команды FIND
+		if (command == "FIND") {
+			cout << path << "     ";
+
+			// Если объект найдён
+			if (found)
+				cout << "Object name: " << found -> get_name();
+			else
+				cout << "Object is not found";
+		}
+
+		// Обработка команды DELETE
+		if (command == "DELETE") {
+			// Если объект найдён
+			if (found) {
+				// Получение имени найдённого
+				string found_name = found -> get_name();
+
+				// Проверка, является ли найдённый объект подчинённым текущего
+				if (found == current -> get_child_by_name(found_name)) {
+					// Создание абсолютного пути
+					string path = "/" + found_name;
+
+					Base* root_child = found;
+
+					while (root_child -> get_parent() -> get_parent()) {
+						root_child = root_child -> get_parent();
+
+						path = "/" + root_child -> get_name() + path;
+					}
+
+					// Удаление найдённого
+					current -> delete_child(found_name);
+
+					cout << "The object " << path << " has been deleted";
+				}
+			}
+		}
+
+		// Обработка команды MOVE
+		if (command == "MOVE") {
+			// Если объект не найдён
+			if (!found)
+				cout << path << "     Head object is not found";
+
+			// Недопустимо при переопределении, чтобы у нового головного
+			// появились два подчиненных объекта с одинаковым наименованием.
+			else if (found -> get_child_by_name(current -> get_name()))
+				cout << path << "     Dubbing the names of subordinate objects";
+
+			// Если переопределение успешно
+			else if (current -> move_to(found))
+				cout << "New head object: " << found -> get_name();
+
+			else
+				cout << path << "     Redefining the head object failed";
+		}
+
+		cout << endl;
+	}
+	// ------------------------
+
+	// Вывод дерева после изменений
+	cout << "Current object hierarchy tree" << endl;
+	display_tree();
 
 	return(0);
 }

@@ -152,7 +152,7 @@ Base* Base::find_unique(string name) {
 		// Если найдённый объект не уникальный, возврат nullptr
 		if (current -> name == name) {
 			if (found) return nullptr;
-			
+
 			found = current;
 		}
 
@@ -176,3 +176,128 @@ Base* Base::find_unique_from_root(string name) {
 	return root -> find_unique(name);
 }
 // --------------------------- </Exercise2> ---------------------------
+
+
+// --------------------------- <Exercise3> ---------------------------
+
+// Метод поиска объекта по пути во всём дереве
+Base* Base::find_by_path(string path) {
+	if (path.empty()) return nullptr;
+
+	// Поиск корневого объекта ("/")
+	Base* root = this;
+
+	while (root -> parent)
+		root = root -> parent;
+
+	// Обработка базового пути
+	if (path == "/") return root;
+	if (path == ".") return this;
+
+	// Имя следующего объекта
+	string node_name;
+
+	// Обработка пути вида "//object_3"
+	if (path[0] == '/' && path[1] == '/') {
+		node_name = path.substr(2);
+
+		return find_unique_from_root(node_name);
+	}
+
+	// Обработка пути вида ".object_3"
+	if (path[0] == '.') {
+		node_name = path.substr(1);
+
+		return find_unique(node_name);
+	}
+
+	int slash_index = path.find("/", 1);     // Поиск слеша с индекса 1
+	bool is_final_node = slash_index == -1;  // Является ли текущий последним в пути
+
+	Base* next = nullptr;                    // Следующий объект
+
+	// Обработка пути вида "/object_3..."
+	if (path[0] == '/') {
+		node_name = is_final_node
+			? path.substr(1)                    // "/object_3"
+			: path.substr(1, slash_index - 1);  // "/object_3/object_5..."
+
+		next = root -> get_child_by_name(node_name);		
+	}
+	// Обработка пути вида "object_3..."
+	else {
+		node_name = is_final_node
+			? path                          // "object_3"
+			: path.substr(0, slash_index);  // "object_3/object_5..."
+
+		next = get_child_by_name(node_name);
+	}
+
+	// Условие прекращения рекурсии:
+	// объект является последним
+	// или следующий объект не найдён
+	if (is_final_node || !next) return next;
+
+	// Поиск объекта в поддереве по пути с помощью рекурсии
+	string next_path = path.substr(slash_index + 1);
+
+	return next -> find_by_path(next_path);
+}
+
+// Метод переопределения родительского объекта для текущего
+bool Base::move_to(Base* new_parent) {
+	// --- Проверка возможности работы метода ---
+
+	// Если уже является родительским
+	if (parent == new_parent) return true;
+
+	// Переопределение головного объекта для корневого объекта недопустимо.
+	// Недопустимо создать второй корневой объект.
+	if (!parent || !new_parent) return false;
+
+	// Недопустимо при переопределении, чтобы у нового головного
+	// появились два подчиненных объекта с одинаковым наименованием.
+	if (new_parent -> get_child_by_name(name))
+		return false;
+
+	// Новый головной объект не должен принадлежать к объектам из ветки текущего.
+	Base* current = new_parent;
+
+	while (current) {
+		if (current == this) return false;
+
+		current = current -> parent;
+	}
+	// ------------------------------------------
+
+	// Ссылки на подчинённые старого и нового родительских
+	vector <Base*> & old_siblings = parent -> children;
+	vector <Base*> & new_siblings = new_parent -> children;
+
+	// Поиск текущего в old_siblings и его удаление на векторе этой ссылки
+	auto it = find(old_siblings.begin(), old_siblings.end(), this);
+	old_siblings.erase(it);
+
+	// Изменение свойства parent и добавление текущего в new_siblings
+	parent = new_parent;
+	new_siblings.push_back(this);
+
+	return true;
+}
+
+// Метод удаления подчинённого объекта по имени
+void Base::delete_child(string name) {
+	// Получение подчинённого по имени
+	Base* child = get_child_by_name(name);
+
+	// Если подчинённый найдён
+	if (child) {
+		// Поиск подчинённого в children и его удаление на этом векторе
+		auto it = find(children.begin(), children.end(), child);
+		children.erase(it);
+
+		// Главное удаление подчинённого - вызов деструктора подчинённого
+		delete child;
+	}
+}
+// --------------------------- </Exercise3> ---------------------------
